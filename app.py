@@ -5,11 +5,13 @@ from PIL import Image
 import  numpy as np
 import tensorflow as tf
 import math
+import yagmail
+
 caspath=os.path.dirname(cv2.__file__)+"/data/haarcascade_frontalface_default.xml"
 face_cascade=cv2.CascadeClassifier(caspath)
 new_model=tf.keras.models.load_model("trained_mdl.h5")
 #new_model=cv2.face.LBPHFaceRecognizer_create()
-def detect_faces(image):
+def detect_faces(image,ans):
     FONT_SCALE = 2e-3  # Adjust for larger font size in all images
     THICKNESS_SCALE = 1e-3  # Adjust for larger thickness in all images
 
@@ -61,10 +63,14 @@ def detect_faces(image):
                 print(mask, withoutMask)
             if mask > withoutMask:
                 print('Wearing Mask')
+                ans= 'Wearing a Mask'
             else:
                 print('Not wearing Mask')
-    return img
+                ans='Not Wearing a Mask'
+    return img,ans
 def main():
+    ans=''
+    dat=''
     st.title("Face Mask Detector")
     html_temp="""
     <body style="background-color:red;">
@@ -81,7 +87,21 @@ def main():
         st.text("original Image")
         st.image(image)
     if st.button("Recognise"):
-        result_img=detect_faces(image)
+        result_img,ans=detect_faces(image,ans)
         st.image(result_img)
+        dat="The Uploaded Face is "+ ans
+        print("here")
+        st.download_button("Download Analysis", dat, file_name='Processed_Image.txt', key='Download Image Analysis')
+    rec=st.text_input('Enter your email')
+    if st.button("Mail to me"):
+          result_img, ans = detect_faces(image, ans)
+          dat = "The Uploaded Face is " + ans
+          if(len(rec)!=0):
+           yag = yagmail.SMTP('devanshkumaravi@gmail.com', 'oowhmqyyreotkwys')
+           contents = [dat]
+           yag.send(rec, 'subject', contents)
+          else:
+           st.warning('Please Enter Your Email', icon="⚠️")
+
 if __name__== '__main__':
     main()
