@@ -81,8 +81,15 @@ def main():
     """
     st.markdown(html_temp,unsafe_allow_html=True)
 
-    image_file=st.file_uploader("Upload Image",type=['jpg','png','jpeg'])
-    if image_file is not None:
+    img_file_buffer = st.camera_input("Take a picture")
+
+    if img_file_buffer is not None:
+        image = Image.open(img_file_buffer)
+        st.text("original Image")
+        st.image(image)
+    else:
+     image_file=st.file_uploader("Upload Image",type=['jpg','png','jpeg'])
+     if image_file is not None:
         image=Image.open(image_file)
         st.text("original Image")
         st.image(image)
