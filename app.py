@@ -74,7 +74,7 @@ def main():
     st.title("Face Mask Detector")
     html_temp="""
     <body style="background-color:red;">
-    <div style="background-color:teal;padding:10px">
+    <div style="background-color:#ff6f61;padding:10px">
     <h2 style="color:white;text-align:center;">Face Mask Detection app</h2>
     </div>
     </body>
