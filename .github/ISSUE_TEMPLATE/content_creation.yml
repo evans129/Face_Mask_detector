@@ -1,0 +1,113 @@
+name: "Content Creation Request(Content Studio)"
+description: "Create a new article in Content Intelligence Platform"
+title: "New Content Creation Request(Content Studio)"
+labels: ["Content Studio Agent", "Action:Create"]
+
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Title
+      description: "Displays on browser tab and search results"
+      placeholder: "Enter article title"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "Used for search description. Helps AI and search engines understand content."
+      placeholder: "Provide a clear summary of the article"
+    validations:
+      required: true
+
+  - type: input
+    id: author
+    attributes:
+      label: Author (GitHub ID)
+      placeholder: "@github-alias"
+    validations:
+      required: true
+
+  - type: input
+    id: ms_author
+    attributes:
+      label: ms.author (Microsoft alias)
+      placeholder: "e.g. devanshk"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ms_service
+    attributes:
+      label: ms.service
+      description: "Must select ONLY one value from approved taxonomy"
+      options:
+        - Azure
+        - Microsoft365
+        - Dynamics365
+        - PowerPlatform
+        - Security
+        - Other (update taxonomy)
+    validations:
+      required: true
+
+  - type: input
+    id: ms_date
+    attributes:
+      label: ms.date
+      description: "Use US format DD/MM/YYYY"
+      placeholder: "DD/MM/YYYY"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ms_topic
+    attributes:
+      label: ms.topic
+      options:
+        - conceptual
+        - quickstart
+        - tutorial
+        - how-to-guide
+        - reference
+        - overview
+    validations:
+      required: true
+
+  - type: input
+    id: awa_article_guid
+    attributes:
+      label: awa-articleGuid
+      description: "TBD / generated later"
+      placeholder: "Leave blank if not available"
+    validations:
+      required: false
+
+  - type: input
+    id: attachments_url
+    attributes:
+      label: Attachments URL
+      description: "SharePoint link to supporting documents"
+      placeholder: "https://sharepoint..."
+    validations:
+      required: false
+
+  - type: input
+    id: filepath
+    attributes:
+      label: File Path
+      description: "New article GitHub path (docset/foldername)"
+      placeholder: "docs/service-name/article-name.md"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: "Any extra details for the content creation"
+      placeholder: "References, spec links, related issues"
+    validations:
+      required: false
