@@ -38,7 +38,7 @@ while True:
         else:
             label= "No Mask"
         print(label)
-        color = (0, 255, 0) if label == "Mask" else (255,0,0)
+        color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
         label = "{}: {:.2f}%".format(label, max(mask, withoutMask) * 100)
         cv2.putText(frame, label, (x, y - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
