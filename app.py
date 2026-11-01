@@ -1,15 +1,53 @@
 import streamlit as st
 import cv2
 import os
+import threading
 from PIL import Image
 import  numpy as np
-import tensorflow as tf
+from ai_edge_litert.interpreter import Interpreter
 import math
 import yagmail
 
+
+class TFLiteModel:
+    """Runs a TensorFlow Lite model through the same predict() call the Keras model used."""
+
+    def __init__(self, path):
+        self._interpreter = Interpreter(model_path=path)
+        self._interpreter.allocate_tensors()
+        self._input = self._interpreter.get_input_details()[0]
+        self._output = self._interpreter.get_output_details()[0]
+        self._lock = threading.Lock()
+
+    def predict(self, batch):
+        samples = np.asarray(batch, dtype=np.float32).reshape((-1, *self._input["shape"][1:]))
+        outputs = []
+        # Streamlit runs each session on its own thread, and an interpreter isn't thread-safe.
+        with self._lock:
+            for sample in samples:
+                self._interpreter.set_tensor(self._input["index"], sample[np.newaxis])
+                self._interpreter.invoke()
+                outputs.append(self._interpreter.get_tensor(self._output["index"])[0].copy())
+        return np.array(outputs)
+
+
+@st.cache_resource
+def load_model(path):
+    return TFLiteModel(path)
+
+
+def email_credentials():
+    """Sender address and Gmail app password from Streamlit secrets, or None when email isn't set up."""
+    try:
+        sender = st.secrets["email"]
+        return sender["user"], sender["app_password"]
+    except (KeyError, FileNotFoundError):
+        return None
+
+
 caspath=os.path.dirname(cv2.__file__)+"/data/haarcascade_frontalface_default.xml"
 face_cascade=cv2.CascadeClassifier(caspath)
-new_model=tf.keras.models.load_model("trained_mdl.h5")
+new_model=load_model("trained_mdl.tflite")
 #new_model=cv2.face.LBPHFaceRecognizer_create()
 def detect_faces(image,ans):
     FONT_SCALE = 2e-3  # Adjust for larger font size in all images
@@ -39,9 +77,9 @@ def detect_faces(image,ans):
             face_frame = img[y:y + h, x:x + w]
             face_frame = cv2.cvtColor(face_frame, cv2.COLOR_BGR2RGB)
             face_frame = cv2.resize(face_frame, (224, 224))
-            face_frame = tf.keras.preprocessing.image.img_to_array(face_frame)
+            face_frame = face_frame.astype(np.float32)
             face_frame = np.expand_dims(face_frame, axis=0)
-            face_frame = tf.keras.applications.mobilenet_v2.preprocess_input(face_frame)
+            face_frame = face_frame / 127.5 - 1.0  # MobileNetV2 preprocessing: scale pixels to [-1, 1]
             faces_list.append(face_frame)
             if len(faces_list) > 0:
                 preds = new_model.predict(faces_list)
@@ -81,6 +119,7 @@ def main():
     """
     st.markdown(html_temp,unsafe_allow_html=True)
 
+    image = None
     img_file_buffer = st.camera_input("Take a picture")
 
     if img_file_buffer is not None:
@@ -94,17 +133,25 @@ def main():
         st.text("original Image")
         st.image(image)
     if st.button("Recognise"):
-        result_img,ans=detect_faces(image,ans)
-        st.image(result_img)
-        dat="The Uploaded Face is "+ ans
-        print("here")
-        st.download_button("Download Analysis", dat, file_name='Processed_Image.txt', key='Download Image Analysis')
+        if image is None:
+            st.warning('Take a picture or upload an image first', icon="⚠️")
+        else:
+            result_img,ans=detect_faces(image,ans)
+            st.image(result_img)
+            dat="The Uploaded Face is "+ ans
+            st.download_button("Download Analysis", dat, file_name='Processed_Image.txt', key='Download Image Analysis')
+    credentials = email_credentials()
+    if credentials is None:
+        st.caption("Emailing results is turned off in this demo. Use Download Analysis instead.")
+        return
     rec=st.text_input('Enter your email')
     if st.button("Mail to me"):
-          result_img, ans = detect_faces(image, ans)
-          dat = "The Uploaded Face is " + ans
-          if(len(rec)!=0):
-           yag = yagmail.SMTP('[email removed]', '[password removed]')
+          if image is None:
+           st.warning('Take a picture or upload an image first', icon="⚠️")
+          elif(len(rec)!=0):
+           result_img, ans = detect_faces(image, ans)
+           dat = "The Uploaded Face is " + ans
+           yag = yagmail.SMTP(*credentials)
            contents = [dat]
            yag.send(rec, 'subject', contents)
           else:

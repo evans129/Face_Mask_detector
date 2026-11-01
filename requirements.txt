@@ -1,7 +1,6 @@
-opencv-contrib-python==4.6.0.66
-opencv-python==4.6.0.66
-opencv-python-headless==4.6.0.66
-pandas==1.4.2
-Pillow==9.0.1
-tensorflow
-yagmail
+streamlit>=1.40,<2
+ai-edge-litert>=2.0,<3
+opencv-python-headless>=4.10,<5
+numpy>=1.26,<3
+Pillow>=10,<14
+yagmail>=0.15,<1
